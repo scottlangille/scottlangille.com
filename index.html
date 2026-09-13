@@ -1,22 +1,279 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="scott-ui">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scott Langille</title>
+    <meta name="description" content="Building useful AI at Exa. I build tools that extend what people can do, and spaces that change what they think they can.">
+    <meta name="color-scheme" content="light dark">
+    <script>
+        (() => {
+            let preference = 'system';
+            try { preference = localStorage.getItem('site-appearance') || 'system'; } catch {}
+            document.documentElement.dataset.appearance = preference;
+            document.documentElement.classList.toggle('dark', preference === 'dark' ||
+                (preference !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches));
+        })();
+    </script>
+    <link rel="preconnect" href="https://api.fontshare.com">
+    <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
+    <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=beVietnam-pro@1,2&amp;display=swap">
+    <link rel="stylesheet" href="assets/scott-ui.css?v=e1963a98912b">
+    <link rel="stylesheet" href="playground.css?v=eccada6812b7">
     <style>
+        /* scott-ui theme snapshot: /Users/scott/code/design-system/src/index.css */
+        :root {
+            color-scheme: light;
+            --font-sans: "Be Vietnam Pro", sans-serif;
+            --font-weight-normal: 300;
+            --font-weight-medium: 400;
+            --background: oklch(1 0 0);
+            --foreground: oklch(0.145 0 0);
+            --muted-foreground: oklch(0.556 0 0);
+            --primary: oklch(0.205 0 0);
+            --primary-foreground: oklch(0.985 0 0);
+            --border: color-mix(in srgb, var(--foreground) 14%, transparent);
+        }
+        :root.dark {
+                color-scheme: dark;
+                --background: oklch(0.145 0 0);
+                --foreground: oklch(0.985 0 0);
+                --muted-foreground: oklch(0.708 0 0);
+                --primary: oklch(0.922 0 0);
+                --primary-foreground: oklch(0.205 0 0);
+        }
+        * { box-sizing: border-box; }
+        html { min-height: 100%; }
+        :root[data-theme="scott-ui"] body { font-size: 14px; }
         body {
             margin: 0;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: system-ui, -apple-system, sans-serif;
-            color: #8d8c95;
+            padding: 4.5rem 1.5rem 4rem;
+            background: var(--background);
+            color: var(--foreground);
+            font-family: var(--font-sans);
+            font-size: 14px;
+            font-weight: var(--font-weight-normal);
+            line-height: 1.8;
+            -webkit-font-smoothing: antialiased;
+        }
+        main {
+            --section-space: 3rem;
+            --intro-space: 2.5rem;
+            width: min(100%, 32rem); margin-inline: auto;
+        }
+        #drawing-tool { margin-top: var(--intro-space); }
+        .profile-header { margin-bottom: 1.5rem; }
+        .profile-name { display: flex; align-items: center; gap: 0; }
+        .theme-toggle {
+            display: grid; place-items: center; width: 32px; height: 32px;
+            padding: 6px; margin-block: -4px; border: 0; background: transparent;
+            color: var(--muted-foreground); cursor: pointer;
+        }
+        .theme-toggle:hover { color: var(--foreground); }
+        .theme-toggle:focus-visible { outline: 1px solid currentColor; outline-offset: 2px; }
+        .theme-toggle svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.15; stroke-linecap: round; stroke-linejoin: round; }
+        .theme-moon { transform: translateY(-2px); }
+        .theme-sun { transform: translateY(-1px); }
+        .theme-moon, .dark .theme-sun { display: none; }
+        .dark .theme-moon { display: block; }
+        .profile-header h1, .profile-role, .intro { font-size: 14px; font-weight: var(--font-weight-normal); }
+        .profile-header h1 { font-weight: 700; }
+        .profile-role { margin-top: 0; color: var(--muted-foreground); }
+        .profile-role a { color: inherit; }
+        .intro { max-width: 30rem; }
+        .intro { padding: 0; color: var(--foreground); font-size: 14px; line-height: 1.8; }
+        /* Match the shared Prose paragraph spacing. */
+        .intro p + p { margin-top: 1.25em; }
+        h1, h2 { margin: 0; font: inherit; color: inherit; }
+        p { margin: 0; }
+        a {
+            color: var(--primary);
+            text-decoration: underline;
+            text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+            text-decoration-thickness: 1px;
+            text-underline-offset: .25em;
+            transition: text-decoration-color 140ms ease;
+        }
+        a:hover, a:focus-visible { text-decoration-color: currentColor; }
+        a:focus-visible { outline: 1px solid currentColor; outline-offset: 4px; }
+        /* Subtle dotted underlines for inline links. */
+        .profile-role a, .intro a, .site-accordion p a {
+            text-decoration-style: dotted;
+            text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+            text-underline-offset: 3px;
+            transition: color 100ms ease;
+        }
+        .profile-role a:hover, .intro a:hover, .site-accordion p a:hover {
+            color: color-mix(in srgb, var(--foreground) 65%, var(--background));
+        }
+        .profile-role a { position: relative; text-decoration: none; }
+        .profile-role a::after {
+            content: ""; position: absolute; left: .065em; right: .025em; bottom: -1px;
+            border-bottom: 1px dotted color-mix(in srgb, currentColor 35%, transparent);
+            pointer-events: none;
+        }
+        /* Scott UI components; square corners and uniform type requested by Scott. */
+        :root { --control-radius: 0px; }
+        /* Accordion layout and sketch controls. */
+        .section-heading {
+            display: grid; grid-template-columns: 1.75rem minmax(0,1fr); align-items: center; column-gap: .5rem;
+            margin: var(--section-space) 0 .75rem; color: var(--muted-foreground);
+        }
+        .section-mark {
+            width: 20px; height: 8px; overflow: visible;
+            fill: none; stroke: currentColor; stroke-width: 1;
+            stroke-linecap: round; stroke-linejoin: round;
+        }
+        .intro p, .site-accordion p { text-wrap: pretty; }
+        .site-accordion { border: 0; gap: .25rem; }
+        .site-accordion [data-slot="accordion-item"] {
+            position: relative; border: 0; margin-inline: -.75rem;
+        }
+        .sketch-border {
+            position: absolute; inset: 0; width: 100%; height: 100%;
+            fill: none; stroke: currentColor; stroke-width: .5px;
+            stroke-linecap: round; opacity: 0; pointer-events: none;
+            transition: opacity 160ms ease;
+        }
+        .site-accordion [data-slot="accordion-item"]:hover > .sketch-border,
+        .site-accordion [data-slot="accordion-item"]:focus-within > .sketch-border { opacity: .12; }
+        .site-accordion [data-slot="accordion-trigger"] {
+            position: relative; display: grid; grid-template-columns: 1.75rem minmax(0,1fr); column-gap: .5rem; align-items: baseline; font: inherit; color: inherit; border: 0; border-radius: 0;
+            padding: .75rem 2.75rem .25rem .75rem; min-height: 44px;
+            text-decoration: none; text-wrap: pretty;
+            background: transparent; box-shadow: none;
+            transition: box-shadow 160ms ease;
+        }
+        .site-accordion [data-slot="accordion-trigger"]:hover,
+        .site-accordion [data-slot="accordion-trigger"]:focus-visible {
+            background: transparent;
+            box-shadow: none;
+            text-decoration: none;
+        }
+        .site-accordion [data-slot="accordion-trigger"]:focus-visible {
+            outline: 1px solid currentColor; outline-offset: 2px; box-shadow: none;
+            transition: none;
+        }
+        .idea-sketch { display: inline-flex; width: 1.75rem; height: 1.75rem; align-self: start; color: var(--muted-foreground); }
+        .site-accordion .idea-sketch svg { width: 20px; height: 20px; margin-top: 2px; flex: none; }
+        .site-accordion [data-slot="accordion-trigger-icon"] { display: none; }
+        .site-accordion [data-slot="accordion-trigger"]::before,
+        .site-accordion [data-slot="accordion-trigger"]::after {
+            content: ""; position: absolute; right: .875rem; top: 1.25rem;
+            width: 12px; height: 12px; background: currentColor;
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M1 6.6 Q4 5.7 6 6.1 L10.8 5.5' fill='none' stroke='black' stroke-width='1' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+            opacity: .55; pointer-events: none;
+            transition: none;
+        }
+        .site-accordion [data-slot="accordion-trigger"]::after { transform: none; }
+        .site-accordion [data-slot="accordion-item"]:nth-child(1) [data-slot="accordion-trigger"]::before {
+            mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2012%2012%22%3E%3Cpath%20d%3D%22M.8%206.8%20Q4%205.6%206.5%206%20L10.8%205.4%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E");
+        }
+        .site-accordion [data-slot="accordion-item"]:nth-child(1) [data-slot="accordion-trigger"]::after {
+            mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2012%2012%22%3E%3Cpath%20d%3D%22M6.4%201%20L5.8%205.2%20Q6.7%208%206%2011%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E");
+        }
+        .site-accordion [data-slot="accordion-item"]:nth-child(2) [data-slot="accordion-trigger"]::before {
+            mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2012%2012%22%3E%3Cpath%20d%3D%22M1.6%205%20Q5%206.2%2011%205.8%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E");
+        }
+        .site-accordion [data-slot="accordion-item"]:nth-child(2) [data-slot="accordion-trigger"]::after {
+            mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2012%2012%22%3E%3Cpath%20d%3D%22M5.1%20.8%20Q6.5%205%206.2%207%20L7%2010.4%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E");
+        }
+        .site-accordion [data-slot="accordion-item"]:nth-child(3) [data-slot="accordion-trigger"]::before {
+            mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2012%2012%22%3E%3Cpath%20d%3D%22M.5%206.2%20L4%206.5%20Q8%205.1%2010.2%205.7%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E");
+        }
+        .site-accordion [data-slot="accordion-item"]:nth-child(3) [data-slot="accordion-trigger"]::after {
+            mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2012%2012%22%3E%3Cpath%20d%3D%22M7%201.6%20L6%204.7%20L6.5%207%20Q5.8%209%205.5%2011.5%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E");
+        }
+        .site-accordion [data-slot="accordion-trigger"][aria-expanded="true"]::after {
+            transform: none; opacity: 0;
+        }
+        .site-accordion [data-slot="accordion-content"] {
+            font: inherit; color: var(--muted-foreground); animation-duration: 180ms;
+        }
+        .site-accordion [data-slot="accordion-content"] > div { padding: 0 2.75rem 1rem 3rem; }
+        .site-accordion [data-slot="accordion-content"] p + p { margin-top: 1.25em; }
+        #socials { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin-inline: -.75rem; }
+        #socials [data-slot="button"] { position: relative; cursor: pointer; justify-content: flex-start; gap: .5rem; width: auto; margin: 0; border: 0; }
+        .elsewhere { margin-bottom: .75rem; }
+        #socials [data-slot="button"] {
+            font: inherit; color: inherit; border-radius: 0; text-decoration: none;
+            height: auto; min-height: 44px; padding: .75rem; text-align: left; white-space: normal;
+            background: transparent; box-shadow: none;
+            transition: transform 160ms ease;
+        }
+        #socials [data-slot="button"]:hover {
+            background: transparent;
+            box-shadow: none;
+        }
+        #socials [data-slot="button"] svg {
+            color: var(--muted-foreground);
+            transform-origin: 50% 50%;
+            transition: none;
+        }
+        @media (hover: hover) and (pointer: fine) {
+            #socials [data-slot="button"]:hover [data-slot="button-icon"] svg { transform: translate(1px, -1px); }
+        }
+        #socials [data-slot="button"]:active { transform: scale(.97); }
+        #socials [data-slot="button"]:focus-visible { transition: none; }
+        ::selection { background: var(--primary); color: var(--primary-foreground); }
+        @media (max-width: 640px) {
+            body { padding-top: 3rem; padding-bottom: 3rem; font-size: 14px; }
+            main { --section-space: 2.5rem; --intro-space: 2rem; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { transition: none !important; animation: none !important; }
+            #socials [data-slot="button"]:active,
+            #socials [data-slot="button"]:hover [data-slot="button-icon"] svg { transform: none; }
         }
     </style>
 </head>
 <body>
-    Scott Langille
+    <main>
+        <header class="profile-header">
+            <div class="profile-name">
+                <h1>Scott Langille</h1>
+                <button class="theme-toggle" type="button" aria-label="Switch to dark mode">
+                    <svg class="theme-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M13.4 3.7 L11.5 3.5 L9.3 4.3 L7.7 5.5 L6.4 7.1 L5.8 8.9 L5 10.4 L5.2 12.8 L5.7 14.5 L7.1 16.7 L8.7 17.7 L10.2 18.7 L12.7 19.1 L14.2 18.8 L16.4 18.3 L17.8 16.9 L18.9 15.8 M18.4 16.1 L16.3 16.4 L14.7 15.7 L13.2 15.3 L11.8 13.6 L11.1 12.1 L10.9 9.9 L11.4 8.6 L11.4 7 L12.3 5.5 L13 4.8 M7 12.2 Q8 13.4 9 12 M17.8 2.4 L18.4 4.5 L20.6 5.1 L18.5 5.9 L18 8 L17.3 6 L15.4 5.3 L17.2 4.6"/></svg>
+                    <svg class="theme-sun" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.4 17.9 Q5.1 17.6 7.8 17.8 L12.2 17.6 Q16.9 18 21.5 17.4 M5.5 17.2 C5.1 15.6 5.9 13.6 7.2 12.1 C8.3 10.9 9.9 10.2 11.5 10.4 C13.1 10.1 14.9 11.3 16 12.5 Q18.1 14.7 17.7 17.1 M10.9 3.4 Q10.7 4.9 11.2 6.5 M3.6 7 Q4.3 8.2 5.7 8.9 M19.3 6.1 Q18.8 7.3 17.5 8.4 M1.7 12.6 Q2.6 13 3.5 12.9 M20.3 12.8 Q21.1 12.8 22.3 12.1"/><path d="M8.6 13.6 l.1 .35 M14.3 13.5 l-.05 .3 M10.2 15.1 Q10.8 15.9 11.6 15.8 Q12.5 15.9 13.1 15.15"/></svg>
+                </button>
+            </div>
+            <p class="profile-role">Building useful AI at <a href="https://exa.ai">Exa</a>.</p>
+        </header>
+        <section class="intro" aria-label="About me">
+        <p>I build tools that extend what people can do, and spaces that change what they think they can.</p>
+        </section>
+        <section id="drawing-tool" aria-label="An interactive drawing tool"></section>
+        <h2 class="section-heading" id="thinking-title"><svg class="section-mark" viewBox="0 0 20 8" aria-hidden="true"><path d="M.7 4.6 L4.1 4.2 Q10 4.5 14.4 3.7 L18.2 3.8" /></svg>Thinking about</h2>
+        <section id="ideas" aria-labelledby="thinking-title">
+            <p>The tools we build shape what we can imagine.</p>
+            <p>How do we make ambition feel ordinary?</p>
+            <p>What's worth doing even if it never scales?</p>
+        </section>
+        <h2 class="section-heading elsewhere" id="elsewhere-title"><svg class="section-mark" viewBox="0 0 20 8" aria-hidden="true"><path d="M2 3.8 Q7 4.1 11 3.9 L15 4 Q18 3.9 20.5 3.8" /></svg>Elsewhere</h2>
+        <nav id="socials" aria-label="Find me elsewhere">
+            <a href="https://x.com/scottific">X</a>
+            <noscript>Enable JavaScript to email me.</noscript>
+        </nav>
+    </main>
+    <script>
+        const scheme = matchMedia('(prefers-color-scheme: dark)');
+        const root = document.documentElement;
+        const syncScheme = () => {
+            const preference = root.dataset.appearance;
+            const dark = preference === 'dark' || (preference !== 'light' && scheme.matches);
+            root.classList.toggle('dark', dark);
+            const themeToggle = document.querySelector('.theme-toggle');
+            themeToggle.setAttribute('aria-label', `Switch to ${dark ? 'light' : 'dark'} mode`);
+        };
+        document.addEventListener('click', event => {
+            if (!event.target.closest('.theme-toggle')) return;
+            root.dataset.appearance = root.classList.contains('dark') ? 'light' : 'dark';
+            try { localStorage.setItem('site-appearance', root.dataset.appearance); } catch {}
+            syncScheme();
+        });
+        syncScheme();
+        scheme.addEventListener('change', syncScheme);
+    </script>
+    <script type="module" src="assets/site.js?v=56111aa1f2d7"></script>
 </body>
 </html>

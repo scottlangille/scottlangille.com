@@ -1,0 +1,52 @@
+#drawing-tool { margin: 3rem 0 0; font: inherit; }
+.drawing-surface { user-select: none; -webkit-user-select: none; position: relative; border: 1px solid var(--border); background: color-mix(in srgb, var(--foreground) 1.5%, var(--background)); }
+.drawing-surface svg { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; touch-action: none; cursor: crosshair; }
+#drawing-tool button { font: inherit; color: inherit; background: transparent; border: 0; border-radius: 0; cursor: pointer; min-height: 44px; padding: .25rem .625rem; transition: background 150ms ease; white-space: nowrap; }
+#drawing-tool button:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent); }
+#drawing-tool button:focus-visible { outline: 1px solid currentColor; outline-offset: 2px; }
+#drawing-tool button:disabled { opacity: .35; cursor: default; }
+.drawing-actions { display: flex; align-items: center; justify-content: flex-end; gap: .25rem; border: 1px solid var(--border); border-top: 0; padding: .25rem; }
+.drawing-status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+@media (max-width: 380px) {
+  #drawing-tool button { padding-inline: .4rem; }
+}
+
+.drawing-actions[hidden] { display: none; }
+
+
+.drawing-spacer { display: none; }
+.drawing-escaped .drawing-spacer { display: block; aspect-ratio: 16 / 9; }
+.drawing-escaped .drawing-surface { border-color: transparent; background: transparent; }
+.drawing-escaped .drawing-surface svg {
+  position: absolute; inset: auto; aspect-ratio: auto;
+  z-index: 10; pointer-events: none;
+}
+.drawing-escaped .drawing-grid-fill { display: none; }
+.drawing-escaped .drawing-actions { border-color: transparent; }
+.page-drawable, .page-drawable body { touch-action: none; user-select: none; }
+.page-drawable body { cursor: crosshair; }
+.page-drawable .drawing-surface { touch-action: none; }
+
+#drawing-tool {
+  --drawing-ink: var(--foreground);
+  --drawing-blue: #4263eb;
+  --drawing-turquoise: #079b91;
+  --drawing-gold: #bd870b;
+  --drawing-coral: #e3614f;
+  --drawing-violet: #8b57cf;
+}
+:root.dark #drawing-tool {
+    --drawing-blue: #859eff;
+    --drawing-turquoise: #53d0be;
+    --drawing-gold: #f0c75e;
+    --drawing-coral: #ff917c;
+    --drawing-violet: #bb96f1;
+}
+.drawing-actions { flex-wrap: wrap; }
+.drawing-palette { display: flex; margin-right: auto; align-items: center; }
+.drawing-palette[hidden] { display: none; }
+#drawing-tool .drawing-palette button { width: 30px; min-height: 44px; padding: 5px; }
+.drawing-palette svg { display: block; width: 20px; height: 20px; overflow: visible; }
+.drawing-palette path { fill: var(--swatch); stroke: transparent; stroke-width: 1; }
+.drawing-palette .swatch-ring { fill: none; stroke: var(--muted-foreground); stroke-width: .8; stroke-linecap: round; opacity: 0; }
+.drawing-palette [aria-pressed="true"] .swatch-ring { opacity: 1; }
