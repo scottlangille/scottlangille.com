@@ -1,4 +1,5 @@
 import { composeScore } from './drawing-scores.js';
+import { pageInk } from './drawing-page-ink.js';
 // An original drawing instrument, inspired by Mike van der Sanden's playable portfolio.
 const host = document.querySelector('#drawing-tool');
 const ns = 'http://www.w3.org/2000/svg';
@@ -44,36 +45,56 @@ if (host) {
   let escapedPathIndex = 0, escapedStrokeBase = 0;
   let idleDelay = 1000;
   const ASTRA_ESCAPE_AFTER = 100;
+  const ESCAPED_STROKE_LIMIT = 100;
+  let escapedStrokeCount = 0, astraFinished = false;
   let completedDrawings = 0;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 
   function makeDrawing() {
-    const score = composeScore();
+    let score = composeScore();
+    const writingGroups = new Map();
     const handedness = score.allowReflection === false ? 1 : Math.random() < .5 ? -1 : 1;
     const placements = new Map();
     if (escaped) {
       syncEscapedViewport();
       const page = svg.viewBox.baseVal;
+      const field = pageInk(strokes);
       const groups = new Map();
-      for (const [,points,,id] of score) {
-        if (!groups.has(id)) groups.set(id,[]);
-        groups.get(id).push(...points);
+      for (const [,points,writing,id] of score) {
+        if (!groups.has(id)) groups.set(id,{paths:[],writing:!!writing});
+        groups.get(id).paths.push(points);
       }
-      // Place complete gestures throughout the document, keeping letters and
-      // multi-stroke doodles together instead of scattering their individual strokes.
-      for (const [id,points] of groups) {
+      // Reserve complete messages first, then fit ordinary gestures around them.
+      const ordered = [...groups].sort((a,b) => Number(b[1].writing)-Number(a[1].writing));
+      for (const [id,group] of ordered) {
+        const points = group.paths.flat();
         const xs=points.map(p=>p[0]), ys=points.map(p=>p[1]*handedness);
         const minX=Math.min(...xs), maxX=Math.max(...xs);
         const minY=Math.min(...ys), maxY=Math.max(...ys);
         const padding=16;
-        const scale=Math.min(1,(page.width-padding*2)/Math.max(1,maxX-minX),
-          (page.height-padding*2)/Math.max(1,maxY-minY));
+        const scale=Math.max(.01,Math.min(1,(page.width-padding*2)/Math.max(1,maxX-minX),
+          (page.height-padding*2)/Math.max(1,maxY-minY)));
         const width=(maxX-minX)*scale, height=(maxY-minY)*scale;
-        placements.set(id, {scale,
-          x:page.x+padding+Math.random()*Math.max(0,page.width-padding*2-width)-minX*scale,
-          y:page.y+padding+Math.random()*Math.max(0,page.height-padding*2-height)-minY*scale});
+        let best = null, bestPaths = null, pressure = Infinity;
+        for (let attempt=0; attempt<40; attempt++) {
+          const candidate = {scale,
+            x:page.x+padding+Math.random()*Math.max(0,page.width-padding*2-width)-minX*scale,
+            y:page.y+padding+Math.random()*Math.max(0,page.height-padding*2-height)-minY*scale};
+          const proposed = group.paths.map(path => path.map(([x,y]) =>
+            [candidate.x+x*scale,candidate.y+y*handedness*scale]));
+          if (!field.fits(proposed,group.writing)) continue;
+          const crowding = field.crowding(proposed);
+          if (crowding < pressure) { best=candidate; bestPaths=proposed; pressure=crowding; }
+          if (pressure < .025) break;
+        }
+        if (best) {
+          placements.set(id,best);
+          field.add(bestPaths,group.writing);
+        }
       }
+      score = score.filter(([,points,writing,id]) => placements.has(id));
     }
+
     let clock = 0;
     const drawing = score.map(([pause, waypoints, writing, id]) => {
       clock += Math.min(250, pause * (.7 + Math.random() * .6));
@@ -104,7 +125,8 @@ if (host) {
         }
         clock += travel;
       }
-      return {points, start, end: clock, writing};
+      if (writing && !writingGroups.has(id)) writingGroups.set(id, writing);
+      return {points, start, end: clock, writing: writing ? writingGroups.get(id) : null};
     });
     return drawing;
   }
@@ -125,6 +147,8 @@ if (host) {
     const stroke = strokes[strokes.length - 1];
     if (stroke) stroke.escapedCanvas = true;
     escaped = true;
+    escapedStrokeCount = 0;
+    astraFinished = false;
     host.classList.add('drawing-escaped');
     document.documentElement.classList.add('page-drawable');
     syncEscapedViewport();
@@ -132,6 +156,8 @@ if (host) {
   }
   function restoreCanvas() {
     escaped = false;
+    escapedStrokeCount = 0;
+    astraFinished = false;
     host.classList.remove('drawing-escaped');
     document.documentElement.classList.remove('page-drawable');
     for (const property of ['left','top','width','height']) svg.style.removeProperty(property);
@@ -142,7 +168,7 @@ if (host) {
   pageSizeObserver.observe(surface);
   pageSizeObserver.observe(document.body);
 
-  function canPlay() { return !owned && visible && !document.hidden && !reducedMotion.matches; }
+  function canPlay() { return !astraFinished && !owned && visible && !document.hidden && !reducedMotion.matches; }
   function pauseDemo() {
     clearTimeout(idleTimer);
     cancelAnimationFrame(demoFrame);
@@ -162,6 +188,10 @@ if (host) {
     if (!canPlay()) return;
     if (lastTime) elapsed += Math.min(time - lastTime, 50);
     lastTime = time;
+    if (!paths.length) {
+      astraFinished = true;
+      return;
+    }
     const drawingTime = paths[paths.length - 1].end;
     const erase = escaped ? 0 : Math.max(0, Math.min(1, (elapsed - drawingTime - 1000) / 1100));
     const easedErase = erase * erase * (3 - 2 * erase);
@@ -192,10 +222,18 @@ if (host) {
         strokes[escapedStrokeBase + escapedPathIndex] = samplePath(path);
         if (playhead < path.end) break;
         escapedPathIndex++;
+        escapedStrokeCount++;
+        if (escapedStrokeCount >= ESCAPED_STROKE_LIMIT) {
+          astraFinished = true;
+          schedule();
+          return;
+        }
       }
     } else {
       strokes = paths.filter(path => playhead >= path.start).map(samplePath).filter(path => path.length);
       if (escaped) {
+        // Finish the escaping pen stroke, then compose in page space immediately.
+        paths = paths.slice(0, strokes.length);
         escapedStrokeBase = 0;
         escapedPathIndex = paths.findIndex(path => path.end > playhead);
         if (escapedPathIndex < 0) escapedPathIndex = paths.length;

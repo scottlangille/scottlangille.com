@@ -6,7 +6,7 @@ Serve this directory with `python3 -m http.server 8767 --bind 127.0.0.1`.
 
 - `index.html`: page shell, copy, theme switch, and page styles.
 - `site.jsx`: design-system accordion and social buttons.
-- `playground.js`, `drawing-scores.js`, `drawing-gestures.js`, `drawing-phrases.js`: drawing behavior and compositions.
+- `playground.js`, `drawing-scores.js`, `drawing-gestures.js`, `drawing-phrases.js`, `drawing-page-ink.js`: drawing behavior and compositions.
 - `playground.css`: canvas styles.
 
 Run `node build.mjs` after editing any JavaScript, JSX, or stylesheet, or updating the design system. It bundles all drawing modules into `assets/site.js`, copies the design-system CSS and fonts into `assets/`, and updates the script and stylesheet hashes in `index.html`.
