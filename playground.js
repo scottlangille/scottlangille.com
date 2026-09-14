@@ -48,6 +48,8 @@ if (host) {
   const ESCAPED_STROKE_LIMIT = 100;
   let escapedStrokeCount = 0, astraFinished = false;
   let completedDrawings = 0;
+  const ESCAPE_ATTEMPTS_REQUIRED = 3;
+  let escapeAttempts = 0, beyondCanvas = false;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 
   function makeDrawing() {
@@ -158,6 +160,8 @@ if (host) {
     escaped = false;
     escapedStrokeCount = 0;
     astraFinished = false;
+    escapeAttempts = 0;
+    beyondCanvas = false;
     host.classList.remove('drawing-escaped');
     document.documentElement.classList.remove('page-drawable');
     for (const property of ['left','top','width','height']) svg.style.removeProperty(property);
@@ -357,6 +361,8 @@ if (host) {
     takeOver();
     active = event.pointerId;
     document.documentElement.setPointerCapture(active);
+    escapeAttempts = 0;
+    beyondCanvas = false;
     const stroke = [point(event)];
     stroke.single = escaped;
     stroke.color = selectedColor;
@@ -370,8 +376,14 @@ if (host) {
     if (event.pointerId !== active) return;
     if (!escaped) {
       const [x,y] = point(event);
+      const outsideCanvas = x < 0 || x > 512 || y < 0 || y > 288;
       // Only the actual pen position can unlock the page, never a radial copy.
-      if (x < 0 || x > 512 || y < 0 || y > 288) escapeCanvas();
+      // Count entering outside space, not every move while the pen is held there.
+      if (outsideCanvas && !beyondCanvas) {
+        escapeAttempts++;
+        if (escapeAttempts >= ESCAPE_ATTEMPTS_REQUIRED) escapeCanvas();
+      }
+      beyondCanvas = outsideCanvas;
     }
     const stroke = strokes[strokes.length - 1];
     if (!stroke) return;
@@ -391,6 +403,8 @@ if (host) {
       }
     }
     active = null;
+    escapeAttempts = 0;
+    beyondCanvas = false;
     if (document.documentElement.hasPointerCapture(event.pointerId)) document.documentElement.releasePointerCapture(event.pointerId);
   }
   document.addEventListener('pointerup', finish);
