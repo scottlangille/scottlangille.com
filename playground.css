@@ -1,5 +1,5 @@
-#drawing-tool { margin: 3rem 0 0; font: inherit; }
-.drawing-surface { user-select: none; -webkit-user-select: none; position: relative; border: 1px solid var(--border); background: color-mix(in srgb, var(--foreground) 1.5%, var(--background)); }
+#drawing-tool { --drawing-surface-background: color-mix(in srgb, var(--foreground) 1.5%, var(--background)); margin: 3rem 0 0; font: inherit; }
+.drawing-surface { user-select: none; -webkit-user-select: none; position: relative; border: 1px solid var(--border); background: var(--drawing-surface-background); }
 .drawing-surface > svg { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; touch-action: none; cursor: crosshair; }
 #drawing-tool button { font: inherit; color: inherit; background: transparent; border: 0; border-radius: 0; cursor: pointer; min-height: 44px; padding: .25rem .625rem; transition: background 150ms ease; white-space: nowrap; }
 #drawing-tool button:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent); }
@@ -10,17 +10,17 @@
 .drawing-surface .drawing-snapshot {
   position: absolute; z-index: 2; top: 3px; right: 4px;
   display: grid; place-items: center; width: 36px; min-height: 36px; padding: 8px;
-  color: var(--muted-foreground); opacity: 0; pointer-events: none;
+  color: var(--muted-foreground); background: var(--drawing-surface-background); opacity: 0; pointer-events: none;
   transition: color 150ms ease, background 150ms ease, opacity 150ms ease;
 }
-#drawing-tool .drawing-snapshot { min-height: 36px; }
+#drawing-tool .drawing-snapshot { min-height: 36px; background: var(--drawing-surface-background); }
 .drawing-snapshot svg { width: 20px; height: 20px; overflow: visible; cursor: pointer; }
 .drawing-snapshot path { fill: none; stroke: currentColor; stroke-width: 1.15; stroke-linecap: round; stroke-linejoin: round; }
 .drawing-surface:hover .drawing-snapshot,
 .drawing-surface:focus-within .drawing-snapshot,
 .drawing-snapshot:hover,
 .drawing-snapshot:focus-visible { opacity: 1; pointer-events: auto; }
-#drawing-tool .drawing-snapshot:hover { color: var(--foreground); background: transparent; }
+#drawing-tool .drawing-snapshot:hover { color: var(--foreground); background: var(--drawing-surface-background); }
 #drawing-tool .drawing-snapshot.drawing-snapshot-overlap { color: var(--snapshot-overlap-color); }
 #drawing-tool.drawing-active .drawing-snapshot { opacity: 0; pointer-events: none; }
 @media (max-width: 380px) {
