@@ -37,6 +37,7 @@ if (host) {
     </div>`;
   const svg = host.querySelector('.drawing-surface > svg');
   const surface = host.querySelector('.drawing-surface');
+  const snapshotButton = host.querySelector('.drawing-snapshot');
   let escaped = false;
   const marks = host.querySelector('.drawing-marks');
   const actions = host.querySelector('.drawing-actions');
@@ -173,7 +174,10 @@ if (host) {
     for (const property of ['left','top','width','height']) svg.style.removeProperty(property);
     svg.setAttribute('viewBox', '0 0 512 288');
   }
-  window.addEventListener('resize', syncEscapedViewport);
+  window.addEventListener('resize', () => {
+    syncEscapedViewport();
+    schedule();
+  });
   const pageSizeObserver = new ResizeObserver(syncEscapedViewport);
   pageSizeObserver.observe(surface);
   pageSizeObserver.observe(document.body);
@@ -320,6 +324,74 @@ if (host) {
   });
   let rendered = [];
   const actionButtons = host.querySelectorAll('[data-action="undo"], [data-action="clear"]');
+  function segmentEntersBox(from, to, box) {
+    let start = 0, end = 1;
+    const delta = [to[0] - from[0], to[1] - from[1]];
+    const minimum = [box.left, box.top], maximum = [box.right, box.bottom];
+    for (let axis = 0; axis < 2; axis++) {
+      if (Math.abs(delta[axis]) < .001) {
+        if (from[axis] < minimum[axis] || from[axis] > maximum[axis]) return false;
+        continue;
+      }
+      let near = (minimum[axis] - from[axis]) / delta[axis];
+      let far = (maximum[axis] - from[axis]) / delta[axis];
+      if (near > far) [near, far] = [far, near];
+      start = Math.max(start, near);
+      end = Math.min(end, far);
+      if (start > end) return false;
+    }
+    return true;
+  }
+  function updateSnapshotColor() {
+    if (escaped || !strokes.length) {
+      snapshotButton.classList.remove('drawing-snapshot-overlap');
+      return;
+    }
+    const matrix = svg.getScreenCTM();
+    if (!matrix) return;
+    const inverse = matrix.inverse();
+    const buttonRect = snapshotButton.getBoundingClientRect();
+    const topLeft = new DOMPoint(buttonRect.left, buttonRect.top).matrixTransform(inverse);
+    const bottomRight = new DOMPoint(buttonRect.right, buttonRect.bottom).matrixTransform(inverse);
+    const padding = 1.5 / Math.hypot(matrix.a, matrix.b);
+    const box = {
+      left: Math.min(topLeft.x, bottomRight.x) - padding,
+      right: Math.max(topLeft.x, bottomRight.x) + padding,
+      top: Math.min(topLeft.y, bottomRight.y) - padding,
+      bottom: Math.max(topLeft.y, bottomRight.y) + padding,
+    };
+    let overlap = null;
+    findOverlap:
+    for (const stroke of strokes) {
+      const copies = stroke.single ? 1 : 8;
+      for (let copy = 0; copy < copies; copy++) {
+        const angle = copy * Math.PI / 4;
+        const cosine = Math.cos(angle), sine = Math.sin(angle);
+        const rotate = ([x,y]) => {
+          const dx = x - 256, dy = y - 144;
+          return [256 + dx * cosine - dy * sine, 144 + dx * sine + dy * cosine];
+        };
+        let previous = rotate(stroke[0]);
+        if (segmentEntersBox(previous, previous, box)) {
+          overlap = stroke.color || 'ink';
+          break findOverlap;
+        }
+        for (let index = 1; index < stroke.length; index++) {
+          const current = rotate(stroke[index]);
+          if (segmentEntersBox(previous, current, box)) {
+            overlap = stroke.color || 'ink';
+            break findOverlap;
+          }
+          previous = current;
+        }
+      }
+    }
+    snapshotButton.classList.toggle('drawing-snapshot-overlap', Boolean(overlap));
+    if (overlap) {
+      const contrast = overlap === 'coral' ? 'blue' : 'coral';
+      snapshotButton.style.setProperty('--snapshot-overlap-color', `var(--drawing-${contrast})`);
+    }
+  }
   function render() {
     frame = 0;
     for (let i = 0; i < Math.max(strokes.length, rendered.length); i++) {
@@ -351,6 +423,7 @@ if (host) {
     }
     rendered.length = strokes.length;
     actionButtons.forEach(button => button.disabled = !strokes.length);
+    updateSnapshotColor();
   }
   function schedule() { if (!frame) frame = requestAnimationFrame(render); }
   function point(event) {
