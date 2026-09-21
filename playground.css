@@ -1,5 +1,6 @@
 #drawing-tool { margin: 3rem 0 0; font: inherit; }
 .drawing-surface { user-select: none; -webkit-user-select: none; position: relative; border: 1px solid var(--border); background: color-mix(in srgb, var(--foreground) 1.5%, var(--background)); }
+.drawing-surface::after { content: ""; position: absolute; top: 0; right: -42px; width: 42px; height: 100%; }
 .drawing-surface > svg { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; touch-action: none; cursor: crosshair; }
 #drawing-tool button { font: inherit; color: inherit; background: transparent; border: 0; border-radius: 0; cursor: pointer; min-height: 44px; padding: .25rem .625rem; transition: background 150ms ease; white-space: nowrap; }
 #drawing-tool button:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent); }
@@ -30,6 +31,7 @@
 .drawing-spacer { display: none; }
 .drawing-escaped .drawing-spacer { display: block; aspect-ratio: 16 / 9; }
 .drawing-escaped .drawing-surface { border-color: transparent; background: transparent; }
+.drawing-escaped .drawing-surface::after { display: none; }
 .drawing-escaped .drawing-surface > svg {
   position: absolute; inset: auto; aspect-ratio: auto;
   z-index: 10; pointer-events: none;
