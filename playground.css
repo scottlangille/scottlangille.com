@@ -14,13 +14,15 @@
   color: var(--muted-foreground); opacity: 0; pointer-events: none;
   transition: color 150ms ease, background 150ms ease, opacity 150ms ease;
 }
+#drawing-tool .drawing-snapshot { min-height: 36px; }
 .drawing-snapshot svg { width: 20px; height: 20px; overflow: visible; cursor: pointer; }
 .drawing-snapshot path { fill: none; stroke: currentColor; stroke-width: 1.15; stroke-linecap: round; stroke-linejoin: round; }
 .drawing-surface:hover .drawing-snapshot,
 .drawing-surface:focus-within .drawing-snapshot,
 .drawing-snapshot:hover,
 .drawing-snapshot:focus-visible { opacity: 1; pointer-events: auto; }
-.drawing-surface .drawing-snapshot:hover { color: var(--foreground); }
+#drawing-tool .drawing-snapshot:hover { color: var(--foreground); background: transparent; }
+#drawing-tool.drawing-active .drawing-snapshot { opacity: 0; pointer-events: none; }
 @media (max-width: 380px) {
   #drawing-tool button { padding-inline: .4rem; }
 }

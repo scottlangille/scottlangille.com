@@ -364,6 +364,7 @@ if (host) {
     // Links and accordion controls still work while the page is a drawing surface.
     if (escaped && event.target.closest('a, button, input, textarea, select, [contenteditable], [role="button"]')) return;
     event.preventDefault();
+    host.classList.add('drawing-active');
     takeOver();
     active = event.pointerId;
     document.documentElement.setPointerCapture(active);
@@ -409,6 +410,7 @@ if (host) {
       }
     }
     active = null;
+    host.classList.remove('drawing-active');
     escapeAttempts = 0;
     beyondCanvas = false;
     if (document.documentElement.hasPointerCapture(event.pointerId)) document.documentElement.releasePointerCapture(event.pointerId);
