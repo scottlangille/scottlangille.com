@@ -27,8 +27,7 @@
 .drawing-snapshot:focus-visible { opacity: 1; pointer-events: auto; }
 .drawing-surface:hover::after,
 .drawing-surface:focus-within::after { opacity: 1; }
-#drawing-tool .drawing-snapshot:hover { color: var(--foreground); background: var(--drawing-surface-background); }
-#drawing-tool .drawing-snapshot.drawing-snapshot-overlap { color: var(--snapshot-overlap-color); }
+#drawing-tool .drawing-snapshot:hover { color: var(--drawing-coral); background: var(--drawing-surface-background); }
 #drawing-tool.drawing-active .drawing-snapshot { opacity: 0; pointer-events: none; }
 #drawing-tool.drawing-active .drawing-surface::after { opacity: 0; }
 @media (max-width: 380px) {
