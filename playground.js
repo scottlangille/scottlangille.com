@@ -13,6 +13,12 @@ if (host) {
   host.innerHTML = `
     <div class="drawing-surface">
       <div class="drawing-spacer" aria-hidden="true"></div>
+      <button class="drawing-snapshot" type="button" data-action="snapshot" aria-label="Save drawing as an image">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3.5 8.4 Q3.4 7.1 4.9 7 L8 6.9 L9.4 4.8 Q9.8 4.2 10.7 4.2 L14.2 4.3 Q15 4.3 15.4 5 L16.7 7 L19.3 7.1 Q20.7 7.1 20.6 8.5 L20.5 18.2 Q20.5 19.4 19.2 19.4 L4.8 19.3 Q3.5 19.3 3.5 18 Z"/>
+          <path d="M8.3 13 Q8.3 9.5 11.8 9.4 Q15.6 9.4 15.7 13 Q15.7 16.7 12 16.8 Q8.5 16.7 8.3 13 Z M18 9.6 l.1 .1"/>
+        </svg>
+      </button>
       <svg viewBox="0 0 512 288" aria-label="Radial drawing canvas" role="img">
         <defs>
           <pattern id="drawing-grid" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="16" cy="12" r=".7" fill="currentColor" opacity=".14"/></pattern>
@@ -29,7 +35,7 @@ if (host) {
       <button type="button" data-action="clear">Clear</button>
       <span class="drawing-status" role="status" aria-live="polite"></span>
     </div>`;
-  const svg = host.querySelector('svg');
+  const svg = host.querySelector('.drawing-surface > svg');
   const surface = host.querySelector('.drawing-surface');
   let escaped = false;
   const marks = host.querySelector('.drawing-marks');
@@ -421,6 +427,60 @@ if (host) {
     queueDemo();
   }
 
+  function saveDrawing() {
+    const clone = svg.cloneNode(true);
+    clone.setAttribute('xmlns', ns);
+    clone.setAttribute('viewBox', '0 0 512 288');
+    clone.setAttribute('width', '1024');
+    clone.setAttribute('height', '576');
+    clone.removeAttribute('aria-label');
+    clone.removeAttribute('role');
+    clone.removeAttribute('style');
+
+    const sourceNodes = [svg, ...svg.querySelectorAll('*')];
+    const cloneNodes = [clone, ...clone.querySelectorAll('*')];
+    sourceNodes.forEach((source, index) => {
+      const target = cloneNodes[index];
+      const style = getComputedStyle(source);
+      if (style.color) target.style.color = style.color;
+      if (style.fill && style.fill !== 'none') target.style.fill = style.fill;
+      if (style.stroke && style.stroke !== 'none') target.style.stroke = style.stroke;
+      if (style.opacity !== '1') target.style.opacity = style.opacity;
+    });
+
+    const background = document.createElementNS(ns, 'rect');
+    background.setAttribute('width', '512');
+    background.setAttribute('height', '288');
+    background.setAttribute('fill', getComputedStyle(surface).backgroundColor);
+    clone.insertBefore(background, clone.firstChild);
+
+    const blob = new Blob([new XMLSerializer().serializeToString(clone)], {type: 'image/svg+xml'});
+    const url = URL.createObjectURL(blob);
+    const image = new Image();
+    image.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1024;
+      canvas.height = 576;
+      canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(png => {
+        if (!png) return;
+        const downloadUrl = URL.createObjectURL(png);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `scottlangille-drawing-${new Date().toISOString().slice(0, 10)}.png`;
+        link.click();
+        URL.revokeObjectURL(downloadUrl);
+        status.textContent = 'Drawing saved as a PNG.';
+      }, 'image/png');
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      status.textContent = 'The drawing could not be saved.';
+    };
+    image.src = url;
+  }
+
   host.addEventListener('click', event => {
     const button = event.target.closest('button');
     if (!button) return;
@@ -428,6 +488,10 @@ if (host) {
       selectedColor = button.dataset.color;
       restartClearCountdown();
       paletteControl.querySelectorAll('button').forEach(swatch => swatch.setAttribute('aria-pressed', String(swatch.dataset.color === selectedColor)));
+      return;
+    }
+    if (button.dataset.action === 'snapshot') {
+      saveDrawing();
       return;
     }
     takeOver();

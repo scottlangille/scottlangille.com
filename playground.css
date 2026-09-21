@@ -1,12 +1,25 @@
 #drawing-tool { margin: 3rem 0 0; font: inherit; }
 .drawing-surface { user-select: none; -webkit-user-select: none; position: relative; border: 1px solid var(--border); background: color-mix(in srgb, var(--foreground) 1.5%, var(--background)); }
-.drawing-surface svg { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; touch-action: none; cursor: crosshair; }
+.drawing-surface > svg { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; touch-action: none; cursor: crosshair; }
 #drawing-tool button { font: inherit; color: inherit; background: transparent; border: 0; border-radius: 0; cursor: pointer; min-height: 44px; padding: .25rem .625rem; transition: background 150ms ease; white-space: nowrap; }
 #drawing-tool button:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent); }
 #drawing-tool button:focus-visible { outline: 1px solid currentColor; outline-offset: 2px; }
 #drawing-tool button:disabled { opacity: .35; cursor: default; }
 .drawing-actions { display: flex; align-items: center; justify-content: flex-end; gap: .25rem; border: 1px solid var(--border); border-top: 0; padding: .25rem; }
 .drawing-status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.drawing-surface .drawing-snapshot {
+  position: absolute; z-index: 2; top: -1px; right: -42px;
+  display: grid; place-items: center; width: 36px; min-height: 36px; padding: 8px;
+  color: var(--muted-foreground); opacity: 0; pointer-events: none;
+  transition: color 150ms ease, background 150ms ease, opacity 150ms ease;
+}
+.drawing-snapshot svg { width: 20px; height: 20px; overflow: visible; cursor: pointer; }
+.drawing-snapshot path { fill: none; stroke: currentColor; stroke-width: 1.15; stroke-linecap: round; stroke-linejoin: round; }
+.drawing-surface:hover .drawing-snapshot,
+.drawing-surface:focus-within .drawing-snapshot,
+.drawing-snapshot:hover,
+.drawing-snapshot:focus-visible { opacity: 1; pointer-events: auto; }
+.drawing-surface .drawing-snapshot:hover { color: var(--foreground); }
 @media (max-width: 380px) {
   #drawing-tool button { padding-inline: .4rem; }
 }
@@ -17,11 +30,12 @@
 .drawing-spacer { display: none; }
 .drawing-escaped .drawing-spacer { display: block; aspect-ratio: 16 / 9; }
 .drawing-escaped .drawing-surface { border-color: transparent; background: transparent; }
-.drawing-escaped .drawing-surface svg {
+.drawing-escaped .drawing-surface > svg {
   position: absolute; inset: auto; aspect-ratio: auto;
   z-index: 10; pointer-events: none;
 }
 .drawing-escaped .drawing-grid-fill { display: none; }
+.drawing-escaped .drawing-snapshot { display: none; }
 .drawing-escaped .drawing-actions { border-color: transparent; }
 .page-drawable, .page-drawable body { touch-action: none; user-select: none; }
 .page-drawable body { cursor: crosshair; }
