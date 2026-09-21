@@ -24,6 +24,10 @@
 @media (max-width: 380px) {
   #drawing-tool button { padding-inline: .4rem; }
 }
+@media (max-width: 620px) {
+  .drawing-surface::after { display: none; }
+  .drawing-surface .drawing-snapshot { top: 0; right: 0; }
+}
 
 .drawing-actions[hidden] { display: none; }
 
