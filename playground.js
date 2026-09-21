@@ -13,12 +13,14 @@ if (host) {
   host.innerHTML = `
     <div class="drawing-surface">
       <div class="drawing-spacer" aria-hidden="true"></div>
-      <button class="drawing-snapshot" type="button" data-action="snapshot" aria-label="Save drawing as an image">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M3.5 8.4 Q3.4 7.1 4.9 7 L8 6.9 L9.4 4.8 Q9.8 4.2 10.7 4.2 L14.2 4.3 Q15 4.3 15.4 5 L16.7 7 L19.3 7.1 Q20.7 7.1 20.6 8.5 L20.5 18.2 Q20.5 19.4 19.2 19.4 L4.8 19.3 Q3.5 19.3 3.5 18 Z"/>
-          <path d="M8.3 13 Q8.3 9.5 11.8 9.4 Q15.6 9.4 15.7 13 Q15.7 16.7 12 16.8 Q8.5 16.7 8.3 13 Z M18 9.6 l.1 .1"/>
-        </svg>
-      </button>
+      <div class="drawing-snapshot-control">
+        <button class="drawing-snapshot" type="button" data-action="snapshot" aria-label="Save drawing as an image">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3.5 8.4 Q3.4 7.1 4.9 7 L8 6.9 L9.4 4.8 Q9.8 4.2 10.7 4.2 L14.2 4.3 Q15 4.3 15.4 5 L16.7 7 L19.3 7.1 Q20.7 7.1 20.6 8.5 L20.5 18.2 Q20.5 19.4 19.2 19.4 L4.8 19.3 Q3.5 19.3 3.5 18 Z"/>
+            <path d="M8.3 13 Q8.3 9.5 11.8 9.4 Q15.6 9.4 15.7 13 Q15.7 16.7 12 16.8 Q8.5 16.7 8.3 13 Z M18 9.6 l.1 .1"/>
+          </svg>
+        </button>
+      </div>
       <svg viewBox="0 0 512 288" aria-label="Radial drawing canvas" role="img">
         <defs>
           <pattern id="drawing-grid" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="16" cy="12" r=".7" fill="currentColor" opacity=".14"/></pattern>
